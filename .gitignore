@@ -1,0 +1,56 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# next.js
+.next
+out
+build
+next-env.d.ts
+
+# environment
+.env
+.env*.local
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# misc
+.DS_Store
+*.pem
+.vercel
+.idea
+.vscode
+
+# hardhat / solidity
+artifacts
+cache-hardhat
+typechain-types
+
+# typescript incremental build artifact
+tsconfig.tsbuildinfo
+
+# private docs
+docs/ARC_GRANT_APPLICATION.md
+docs/pitch-deck.html
+docs/pitch-deck.pdf
+docs/x-avatar.html
+docs/x-avatar.png
+docs/x-banner.html
+docs/x-banner.png
+docs/*.private.md
+faucet-log-*.json
+
+# runtime state from cron scripts (contains scanned block numbers,
+# no secrets — but pollutes diffs on every cron run)
+data/lift-engine-cursor.json
+reward-state.json
+
+# local IDE / OS clutter
+.cursor/
+*.log
+.env*

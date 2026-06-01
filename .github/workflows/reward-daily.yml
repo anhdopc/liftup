@@ -1,0 +1,57 @@
+# Daily reward distribution — fires ONCE per day at 10:00 UTC.
+#
+# The single run:
+#   1. Settles unsettled fees into the 5 buckets.
+#   2. Rolls dailyToday → dailyYesterday (the frozen, distributable snapshot).
+#   3. Picks 24 swap winners + 24 LP-lottery winners from qualified wallets
+#      with flat odds (no tier / lock multiplier on daily).
+#   4. Distributes the LP pro-rata stream to every qualified LP by pool share.
+#   5. Submits one distributeDaily tx that drains the entire dailyYesterday
+#      snapshot.
+#
+# Requirements
+#   Repo Secret: DEPLOYER_PRIVATE_KEY  (owner of LiftupRewardDistributor)
+#
+# Manual trigger
+#   Actions tab → "Reward · Daily" → Run workflow
+name: Reward · Daily
+
+on:
+  schedule:
+    - cron: '0 10 * * *' # 10:00 UTC every day
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  draw:
+    name: Daily draw — 24 swap + 24 LP winners + pro-rata
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@e9540b3eafaf84907c087a645d3258bfaa861427 # v3.0.0
+        with:
+          version: 9
+
+      - name: Setup Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile contracts
+        run: pnpm compile
+
+      - name: Distribute daily bucket (full drain)
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BUCKET: daily
+          EXECUTE: '1'
+        run: pnpm reward:distribute

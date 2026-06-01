@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="lift-grad" x1="0" y1="256" x2="256" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3A4" />
+      <stop offset="0.55" stop-color="#7B61FF" />
+      <stop offset="1" stop-color="#F5C26B" />
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="64" fill="#0F1524" stroke="url(#lift-grad)" stroke-width="12" />
+  <path d="M72 168 L128 96 L184 168" stroke="url(#lift-grad)" stroke-width="19" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M72 200 H184" stroke="url(#lift-grad)" stroke-width="14" stroke-linecap="round" opacity="0.5" />
+</svg>

@@ -1,0 +1,54 @@
+# Monthly lottery distribution.
+#
+# Fires once a month on the 1st at 10:00 UTC. Drains the monthly
+# bucket across 5 unique winners selected by volume-weighted random.
+# Matches the daily / weekly "10:00 UTC fire" pattern so qualification
+# windows close on the calendar boundary and the draw fires shortly after.
+#
+# Note: monthly scans a 30-day block window (~1.3M blocks on Arc),
+# so the job timeout is generous to allow the swap-volume + LP-state
+# aggregation to finish.
+#
+# Manual trigger
+#   Actions tab → "Reward · Monthly" → Run workflow
+name: Reward · Monthly
+
+on:
+  schedule:
+    - cron: '0 10 1 * *' # 1st of month, 10:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  draw:
+    name: Monthly draw
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@e9540b3eafaf84907c087a645d3258bfaa861427 # v3.0.0
+        with:
+          version: 9
+
+      - name: Setup Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile contracts
+        run: pnpm compile
+
+      - name: Distribute monthly bucket (5 winners)
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BUCKET: monthly
+          EXECUTE: '1'
+        run: pnpm reward:distribute

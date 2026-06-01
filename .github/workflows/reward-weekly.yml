@@ -1,0 +1,50 @@
+# Weekly lottery distribution.
+#
+# Fires once a week at Monday 10:00 UTC — the qualification window
+# closes at the end of Sunday (UTC), then the draw fires Monday morning
+# so we always settle "yesterday's" weekly snapshot, matching the
+# Daily 10:00 UTC pattern.
+#
+# Manual trigger
+#   Actions tab → "Reward · Weekly" → Run workflow
+name: Reward · Weekly
+
+on:
+  schedule:
+    - cron: '0 10 * * 1' # Monday 10:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  draw:
+    name: Weekly draw
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@e9540b3eafaf84907c087a645d3258bfaa861427 # v3.0.0
+        with:
+          version: 9
+
+      - name: Setup Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile contracts
+        run: pnpm compile
+
+      - name: Distribute weekly bucket (7 winners)
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BUCKET: weekly
+          EXECUTE: '1'
+        run: pnpm reward:distribute

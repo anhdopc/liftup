@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 256" width="900" height="256">
+  <defs>
+    <linearGradient id="lift-grad-mark" x1="0" y1="256" x2="256" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3A4" />
+      <stop offset="0.55" stop-color="#7B61FF" />
+      <stop offset="1" stop-color="#F5C26B" />
+    </linearGradient>
+    <linearGradient id="lift-grad-text" x1="288" y1="200" x2="880" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3A4" />
+      <stop offset="0.55" stop-color="#7B61FF" />
+      <stop offset="1" stop-color="#F5C26B" />
+    </linearGradient>
+  </defs>
+
+  <!-- Mark -->
+  <rect x="8" y="8" width="240" height="240" rx="64" fill="#0F1524" stroke="url(#lift-grad-mark)" stroke-width="12" />
+  <path d="M72 168 L128 96 L184 168" stroke="url(#lift-grad-mark)" stroke-width="19" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M72 200 H184" stroke="url(#lift-grad-mark)" stroke-width="14" stroke-linecap="round" opacity="0.5" />
+
+  <!-- Wordmark -->
+  <text x="288" y="172"
+        font-family="Sora, 'Sora SemiBold', system-ui, sans-serif"
+        font-weight="600"
+        font-size="156"
+        letter-spacing="-4"
+        fill="url(#lift-grad-text)">LiftUp</text>
+</svg>

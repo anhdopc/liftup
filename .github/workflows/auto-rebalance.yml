@@ -1,0 +1,83 @@
+# Auto-rebalance LiftUp USDC/EURC pool to track live EUR/USD rate.
+#
+# Runs every 4 hours. Each invocation:
+#   1. Fetches live EURC/USD price (CoinGecko)
+#   2. Reads on-chain pool reserves
+#   3. If drift ∈ [MIN, MAX], performs ONE small swap toward target
+#   4. Logs JSON summary to GH Actions output
+#
+# Requirements
+#   Repo Secret: REBALANCER_PRIVATE_KEY
+#     — A dedicated low-balance EOA (recommended) funded with a few
+#       USDC + EURC. Falls back to DEPLOYER_PRIVATE_KEY if not set.
+#
+# Tuning
+#   The default threshold (30 bps min, 1000 bps max, $10 cap) is sized
+#   for a pool of $500-$5000 TVL. Tune via env vars below if needed.
+#
+# Manual trigger
+#   Actions tab → "Pool · Auto-rebalance" → Run workflow
+#   Add DRY_RUN=1 input to test without sending tx.
+name: Pool · Auto-rebalance
+
+on:
+  schedule:
+    - cron: '0 */4 * * *' # every 4 hours
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry-run (compute + log, no swap)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+permissions:
+  contents: read
+
+jobs:
+  rebalance:
+    name: Rebalance pool toward live rate
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@e9540b3eafaf84907c087a645d3258bfaa861427 # v3.0.0
+        with:
+          version: 9
+
+      - name: Setup Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile contracts
+        run: pnpm compile
+
+      - name: Run auto-rebalance
+        env:
+          # Prefer dedicated key; fall back to deployer.
+          REBALANCER_PRIVATE_KEY: ${{ secrets.REBALANCER_PRIVATE_KEY }}
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          # CoinMarketCap key (optional). When set, becomes a third
+          # consensus source so a CoinGecko/Coinbase spike alone can't
+          # publish a target — getTargetRate.js requires sources within
+          # MAX_RATE_DEVIATION_PCT (default 5%) of the median.
+          CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
+          MAX_RATE_DEVIATION_PCT: '5'
+          # Tune these by editing here, not by secrets.
+          MIN_DRIFT_BPS: '30'        # skip below 0.3%
+          ALERT_DRIFT_BPS: '1000'    # act + alert above 10%
+          REFUSE_DRIFT_BPS: '5000'   # refuse + alert above 50% (oracle bug)
+          PCT_CAP_BPS: '200'         # each tick caps at 2% of pool USDC reserve
+          MAX_REBALANCE_USDC: '10'   # absolute USDC ceiling per tick
+          DRY_RUN: ${{ inputs.dry_run == 'true' && '1' || '' }}
+        run: pnpm hh run scripts/auto-rebalance.js --network arcTestnet
